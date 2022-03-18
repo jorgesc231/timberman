@@ -29,4 +29,9 @@
 # Executables
 *.exe
 *.out
-*.app
+
+x64
+/*.filters
+/*.user
+/dependencies
+/.vs
