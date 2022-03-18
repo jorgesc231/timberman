@@ -660,9 +660,12 @@ int main(int argc, char* argv[])
         
         // Draw the flying log
         render_sprite(&spriteLog);
+        
         // Remarca el log
+#ifdef _DEBUG
         SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, 0xFF);
         SDL_RenderDrawRect(renderer, &spriteLog.rect);
+#endif
         
         
         // Draw the gravestone 
@@ -673,21 +676,9 @@ int main(int argc, char* argv[])
         score_text_rect.y = 20;
         draw_text(&score_text_texture, &score_text_rect, score_text, color_red, font_40);
         
-        // DEBUG: Muestra en pantalla la posicion de la nube 1
-        //char nube_1_pos[50];
-        //SDL_Rect nube_1_rect = { 50, 50, 0, 0 };
-        //snprintf(nube_1_pos, 50, "nube 1: x = %d", nubes[0].rect.x);
-        //draw_text(&nube_text_texture, &nube_1_rect, nube_1_pos, color_black, font_50);
-        
         // Draw the time bar
         SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
         SDL_RenderFillRect(renderer, &time_bar);
-        
-        // Draw delta time
-        //snprintf(dt_text, 50, "dt = %f", dt);
-        //SDL_Rect delta_time_rect = { time_bar.x, time_bar.y - 80, 200, 100 };
-        //draw_text(&score_text_texture, &delta_time_rect, dt_text, color_black, font_50);
-        
         
         
         if (state.paused)
@@ -755,6 +746,8 @@ bool init()
     }
     
     
+    // Inicializacion del estado del juego
+    
     // El juego inicia en pausa
     state.paused = true;
     state.running = false;
@@ -816,6 +809,8 @@ bool load_media()
     {
         show_error_window("Error al cargar los assets",
                           "Error al cargar las animaciones, deberian estar en assets/graphics/character");
+        
+        success = false;
     }
     
     // The player starts on the left
@@ -1072,7 +1067,7 @@ void render_sprite(Sprite* sprite)
         
     }
     else {
-        // Renderizar como un cuadrado con color solido
+        // Renderizar como un rectangulo con color solido
         SDL_SetRenderDrawColor(renderer, sprite->color.r, sprite->color.g, sprite->color.b, sprite->color.a);
         SDL_RenderFillRect(renderer, &sprite->rect);
     }
@@ -1101,7 +1096,7 @@ void show_error_window(const char* titulo, const char* msg)
     }
     
 #ifdef _DEBUG
-    ASSERT(0);
+    ASSERT(false);
 #else
     exit(-1);
 #endif
