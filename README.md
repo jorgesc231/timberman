@@ -1,2 +1,15 @@
-# timberman
-Copia de timberman hecho con SDL2 (y sin texturas)
+# Copia de timberman hecho con SDL2 (y sin texturas)
+
+Una copia mal hecha y simplificada del juego Timberman:
+
+	https://store.steampowered.com/app/398710/Timberman/
+
+## TODO
+
+- Agregar Texturas
+- Agregar mas efectos de audio
+- Varios otros bugs
+
+
+## Compilar
+
