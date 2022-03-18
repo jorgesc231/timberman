@@ -1,6 +1,5 @@
 // TODO: Crear mas logs para que no tenga ese lag al cortar el arbol muy rapido
-// TODO: Intenar arreglar la relentizacion de la abeja y las nubes
-// TODO: Mejorar los mensajes de error
+// TODO: Intenar arreglar la ralentizacion de la abeja y las nubes
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -15,12 +14,10 @@
 #ifdef _DEBUG
 
 #define ASSERT(x) if(!(x)) __debugbreak()
-#define LOG_ERROR(m) printf("Error:" m "\n"); exit(-1);
 
 #else
 
 #define ASSERT(x) 
-#define LOG_ERROR(m) 
 
 #endif
 
@@ -105,7 +102,7 @@ void updateBranches(int seed);
 void set_message(const char* text);
 
 void shutdown_game();
-void show_error_window(char* titulo, char* msg);
+void show_error_window(const char* titulo, const char* msg);
 
 
 // Variables para controlar el tiempo
@@ -724,9 +721,10 @@ bool init()
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
     
-    if (!window && !renderer)
+    if (!window || !renderer)
     {
-        LOG_ERROR("Inicializar ventana y renderer")
+        show_error_window("Error al inicializar SDL", 
+                          "No se pudo inicializar la ventana o el renderer.");
     }
     
     //Initialize PNG loading
@@ -752,8 +750,10 @@ bool init()
     int initted = Mix_Init (flags);
     if ((initted & flags) != flags)
     {
-        printf("Mix_Init: %s\n", Mix_GetError());
-        LOG_ERROR("Mix_Init: Failed to init!\n");
+        fprintf(stderr, "Mix_Init: %s\n", Mix_GetError());
+        
+        show_error_window("Error al inicializar SDL_Mix",
+                          "No se pudo inicializar SDL_Mix");
     }
     
     
@@ -816,7 +816,8 @@ bool load_media()
     }
     else
     {
-        LOG_ERROR("Error al cargar la animacions\n");
+        show_error_window("Error al cargar los assets",
+                          "Error al cargar las animaciones, deberian estar en assets/graphics/character");
     }
     
     // The player starts on the left
@@ -895,7 +896,7 @@ bool load_media()
     
     if (!font_50 || !font_40)
     {
-        LOG_ERROR("No se pudo cargar las fuentes");
+        show_error_window("Error al cargar la fuente", "No se pudo cargar la fuente: assets/fonts/KOMIKAP_.ttf");
     }
     
     
@@ -911,7 +912,7 @@ bool load_media()
         success = false;
         shutdown_game();
         
-        LOG_ERROR("Cargar sonido de la espada");
+        show_error_window("Error al cargar audio", "Error al inicializar el dispositivo de audio.");
     }
     
     // Audio de chop
@@ -923,7 +924,7 @@ bool load_media()
         success = false;
         shutdown_game();
         
-        LOG_ERROR("Cargar sonido de la espada");
+        show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de corte: assets/sounds/sword_1.ogg");
         
         // NOTE: Esto podria ser un error critico...
     }
@@ -936,7 +937,7 @@ bool load_media()
         success = false;
         shutdown_game();
         
-        LOG_ERROR("Cargar el sonido de muerte");
+        show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de muerte: assets/sounds/Bone Crushing.wav");
     }
     
 #endif
@@ -1003,6 +1004,7 @@ void updateBranches(int seed)
     {
         branchPositions[j] = branchPositions[j - 1];
     }
+    
     // Spawn ane branch at position 0
     // LEFT, RIGHT or NONE
     srand((int)time(0) + seed);
@@ -1027,7 +1029,6 @@ void updateBranches(int seed)
 
 void set_message(const char* text)
 {
-    // Mensaje es una array de 50 bytes...
     int i = 0;
     for (; text[i] != '\0' && i < MSG_MAX_LEN; i++)
         message_text[i] = text[i];
@@ -1092,13 +1093,20 @@ void shutdown_game()
 }
 
 
-void show_error_window(char* titulo, char* msg)
+void show_error_window(const char* titulo, const char* msg)
 {
     if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, titulo, msg, NULL))
     {
         fprintf(stderr, "Error al mostrar la ventana de error...\n");
+        fprintf(stderr, "%s\n", SDL_GetError());
         fprintf(stderr, "Error: %s\n", msg);
     }
+    
+#ifdef _DEBUG
+    ASSERT(0);
+#else
+    exit(-1);
+#endif
 }
 
 bool load_player_animations(Sprite *player_sprite)
@@ -1114,7 +1122,7 @@ bool load_player_animations(Sprite *player_sprite)
         
         if (!player_animations[i - 1])
         {
-            printf("Unable to create texture from %s! SDL Error: %s\n", path, SDL_GetError());
+            printf("Unable to load texture from %s! SDL Error: %s\n", path, SDL_GetError());
             ASSERT(false);
             exit(-1);
         }
@@ -1127,7 +1135,7 @@ bool load_player_animations(Sprite *player_sprite)
         
         if (!player_animations[(i- 1) + IDLE_FRAMES])
         {
-            printf("Unable to create texture from %s! SDL Error: %s\n", path, SDL_GetError());
+            printf("Unable to load texture from %s! SDL Error: %s\n", path, SDL_GetError());
             ASSERT(false);
             exit(-1);
         }
