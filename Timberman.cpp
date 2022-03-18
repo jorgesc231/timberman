@@ -111,12 +111,12 @@ float last_frame_time = 0;
 
 // Time bar
 float timeBarStartWidth = 400;
-float timeBarHeight = 50;
+int timeBarHeight = 50;
 
 SDL_Rect time_bar = {
-    SCREEN_WIDTH / 2 - timeBarStartWidth / 2, 
+    SCREEN_WIDTH / 2 - (int)(timeBarStartWidth / 2), 
     SCREEN_HEIGHT - timeBarHeight - 10, 
-    timeBarStartWidth, timeBarHeight
+    (int)timeBarStartWidth, timeBarHeight
 };
 
 float timeRemaining = 6.0f;
@@ -174,8 +174,8 @@ Sprite nubes[3];
 Sprite spriteLog;
 Sprite branches[NUM_BRANCHES];
 
-float PLAYER_POSITION_LEFT;
-float PLAYER_POSITION_RIGHT;
+int PLAYER_POSITION_LEFT;
+int PLAYER_POSITION_RIGHT;
 
 side player_side;
 
@@ -313,7 +313,7 @@ int main(int argc, char* argv[])
                 state.score++;
                 
                 // Add to the amount of time remaining
-                timeRemaining += (2 / state.score) + .15;
+                timeRemaining += (2 / state.score) + .15f;
                 if (timeRemaining >= 6.0f) timeRemaining = 6.0f;
                 
                 player.rect.x = PLAYER_POSITION_RIGHT;
@@ -351,7 +351,7 @@ int main(int argc, char* argv[])
                 state.score++;
                 
                 // Add to the amount of time remaining
-                timeRemaining += (2 / state.score) + .15;
+                timeRemaining += (2 / state.score) + .15f;
                 if (timeRemaining >= 6.0f) timeRemaining = 6.0f;
                 
                 player.rect.x = PLAYER_POSITION_LEFT;
@@ -403,7 +403,7 @@ int main(int argc, char* argv[])
             
             // size up the time bar
             // This produces exactly the correct width, relative to how long the player has left.
-            time_bar.w = timeBarWidthPerSecond * timeRemaining;
+            time_bar.w = (int)(timeBarWidthPerSecond * timeRemaining);
             
             
             if (timeRemaining <= 0.0f)
@@ -426,11 +426,13 @@ int main(int argc, char* argv[])
             {
                 // How fast is the bee
                 srand((int)time(0));
-                beeSpeed = (rand() % 100) + 100;
+                beeSpeed = (rand() % 100) + 100.0f;
                 
                 // How high is the bee   
                 srand((int)time(0) * 10);
-                float height = (rand() % (SCREEN_HEIGHT - bee.rect.w));
+                
+                int height = (rand() % (SCREEN_HEIGHT - bee.rect.w));
+                
                 bee.rect.x = 1000;
                 bee.rect.y = height;
                 
@@ -439,7 +441,7 @@ int main(int argc, char* argv[])
             else
             {
                 // Move the bee
-                bee.rect.x -= (beeSpeed * dt);
+                bee.rect.x -= (int)(beeSpeed * dt);
                 
                 // Has the bee reached the right hand edge of the screen? 
                 // whether the bee has disappeared off the left-hand side of the screen.
@@ -457,9 +459,9 @@ int main(int argc, char* argv[])
             {
                 // How fast is the cloud
                 srand((int)time(0) * 10);
-                cloud1Speed = (rand() % 20) + 200;
+                cloud1Speed = (rand() % 30) + 100.0f;
                 
-                // How higth is the cloud
+                // Que tan alto aparece la nube
                 srand((int)time(0) * 10);
                 nubes[0].rect.y = (rand() % 150);
                 nubes[0].rect.x = -200;
@@ -468,7 +470,7 @@ int main(int argc, char* argv[])
             }
             else
             {
-                nubes[0].rect.x += (cloud1Speed * dt);
+                nubes[0].rect.x += (int)(cloud1Speed * dt);
                 
                 // Si la nube pasa del lado derecho de la pantalla
                 if (nubes[0].rect.x > SCREEN_WIDTH)
@@ -483,18 +485,18 @@ int main(int argc, char* argv[])
             {
                 // How fast is the cloud
                 srand((int)time(0) * 20);
-                cloud2Speed = (rand() % 30) + 200;
+                cloud2Speed = (rand() % 50) + 150.0f;
                 
-                // How higj is the cloud
+                // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
-                nubes[1].rect.y = (rand() % 300) - 150;
+                nubes[1].rect.y = (rand() % 350) - 250;
                 nubes[1].rect.x = -200;
                 
                 cloud2Active = true;
             }
             else
             {
-                nubes[1].rect.x += (cloud2Speed * dt);
+                nubes[1].rect.x += (int)(cloud2Speed * dt);
                 
                 // Si la nube pasa del lado derecho de la pantalla
                 if (nubes[1].rect.x > SCREEN_WIDTH)
@@ -508,10 +510,10 @@ int main(int argc, char* argv[])
             if (!cloud3Active)
             {
                 // How fast is the cloud
-                srand((int)time(0) * 30);
-                cloud3Speed = (rand() % 30) + 200;
+                srand((int)time(0) + 50);
+                cloud3Speed = (rand() % 30) + 100.0f;
                 
-                // How higj is the cloud
+                // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
                 nubes[2].rect.y = (rand() % 450) - 150;
                 nubes[2].rect.x = -200;
@@ -520,7 +522,7 @@ int main(int argc, char* argv[])
             }
             else
             {
-                nubes[2].rect.x += (cloud3Speed * dt);
+                nubes[2].rect.x += (int)(cloud3Speed * dt);
                 
                 // Si la nube pasa del lado derecho de la pantalla
                 if (nubes[2].rect.x > SCREEN_WIDTH)
@@ -538,13 +540,12 @@ int main(int argc, char* argv[])
             for (int i = 0; i < NUM_BRANCHES; i++)
             {
                 //float height = i * 150;
-                float height = i * player.rect.h;
+                int height = i * player.rect.h;
                 branches[i].rect.y = height;
                 
                 if (branchPositions[i] == LEFT)
                 {
                     // Move the sprite to the left side
-                    // Flip the sprite round the other way
                     branches[i].rect.x = tree.rect.x - branches[i].rect.w;
                 }
                 else if (branchPositions[i] == RIGTH)
@@ -563,8 +564,8 @@ int main(int argc, char* argv[])
             // Handle a flying log
             if (logActive)
             {
-                spriteLog.rect.x += logSpeedX * dt;
-                spriteLog.rect.y += logSpeedY * dt;
+                spriteLog.rect.x += (int)(logSpeedX * dt);
+                spriteLog.rect.y += (int)(logSpeedY * dt);
                 
                 // Has the log reached the right hand edge?
                 if (spriteLog.rect.x < -100 || spriteLog.rect.x > SCREEN_WIDTH)
@@ -613,8 +614,8 @@ int main(int argc, char* argv[])
             if (player_side == LEFT) tumba_vel_x = -100;
             if (player_side == RIGTH) tumba_vel_x = 100;
             
-            spriteRIP.rect.y += tumba_vel_y * dt;
-            spriteRIP.rect.x += tumba_vel_x * dt;
+            spriteRIP.rect.y += (int)(tumba_vel_y * dt);
+            spriteRIP.rect.x += (int)(tumba_vel_x * dt);
         }
         
         /*
@@ -721,7 +722,10 @@ bool init()
     if (!(IMG_Init(imgFlags) & imgFlags))
     {
         printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
-        return -1;
+        
+        ASSERT(false);
+        
+        return false;
     }
     
     
