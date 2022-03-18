@@ -735,7 +735,7 @@ bool init()
     if (TTF_Init() == -1)
     {
         printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     
     
@@ -1045,7 +1045,7 @@ Sprite load_sprite (const char* path, SDL_Renderer *renderer)
     if (!sprite.texture)
     {
         printf("Unable to create texture from %s! SDL Error: %s\n", path, SDL_GetError());
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     
     sprite.rect.x = 0;
@@ -1104,7 +1104,7 @@ void show_error_window(const char* titulo, const char* msg)
 #ifdef _DEBUG
     ASSERT(false);
 #else
-    exit(-1);
+    exit(EXIT_FAILURE);
 #endif
 }
 
@@ -1123,7 +1123,7 @@ bool load_player_animations(Sprite *player_sprite)
         {
             printf("Unable to load texture from %s! SDL Error: %s\n", path, SDL_GetError());
             ASSERT(false);
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
     }
     
@@ -1136,7 +1136,8 @@ bool load_player_animations(Sprite *player_sprite)
         {
             printf("Unable to load texture from %s! SDL Error: %s\n", path, SDL_GetError());
             ASSERT(false);
-            exit(-1);
+            
+            exit(EXIT_FAILURE);
         }
     }
     
