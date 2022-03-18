@@ -653,9 +653,6 @@ int main(int argc, char* argv[])
         // Draw the "tree"
         render_sprite(&tree);
         
-        // Draw the "bee"
-        render_sprite(&bee);
-        
         // Draw the player animated
         draw_player(dt, &player_state);
         
@@ -671,6 +668,11 @@ int main(int argc, char* argv[])
         
         // Draw the gravestone 
         render_sprite(&spriteRIP);
+        
+        
+        // Draw the "bee"
+        render_sprite(&bee);
+        
         
         // Draw score text
         score_text_rect.x = 20;

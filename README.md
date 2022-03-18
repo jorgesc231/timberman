@@ -9,6 +9,9 @@ Una copia mal hecha y simplificada del juego Timberman:
 - Agregar Texturas
 - Agregar mas efectos de audio
 - Varios otros bugs
+- Aumentar el timpo que se de por punto
+
+- Portarlo a Android (?)
 
 
 ## Compilar
