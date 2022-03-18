@@ -930,14 +930,14 @@ bool load_media()
     }
     
     // Audio de muerte
-    dead_sound = Mix_LoadMUS(SOUNDS_PATH "Bone Crushing.wav");
+    dead_sound = Mix_LoadMUS(SOUNDS_PATH "bone_crushing.wav");
     if (!dead_sound)
     {
         printf("SDL_Mix Error: %s\n", Mix_GetError());
         success = false;
         shutdown_game();
         
-        show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de muerte: assets/sounds/Bone Crushing.wav");
+        show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de muerte: assets/sounds/bone_crushing.wav");
     }
     
 #endif
