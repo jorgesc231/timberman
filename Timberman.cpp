@@ -94,7 +94,7 @@ bool load_media();
 Sprite load_sprite(const char* path, SDL_Renderer *renderer);
 void render_sprite(Sprite* sprite);
 bool load_player_animations(Sprite *player_sprite);
-void draw_player(float dt, enum Player_State anim_state);
+void draw_player(float dt, enum Player_State *anim_state);
 
 bool draw_text(SDL_Texture** texture, SDL_Rect *rect, const char* text, SDL_Color text_color, TTF_Font* fuente);
 
@@ -121,14 +121,13 @@ SDL_Rect time_bar = {
 
 float timeRemaining = 6.0f;
 
-// The result is exactly the amount of pixels that the timeBar needs to shrink by, each second of the game. 
-// This will be useful when we resize the timeBar in each frame.
+// Cantidad de pixeles por segundo que se tiene que achicar la barra de tiempo.
 float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
 int tree_width = SCREEN_WIDTH / 4;
 int piso_height = 100;
 
-SDL_Window* window = NULL;
+SDL_Window* window     = NULL;
 SDL_Renderer* renderer = NULL;
 SDL_Event eventos;
 
@@ -159,7 +158,6 @@ char dt_text[50];
 
 SDL_Texture *player_animations[TOTAL_FRAMES];
 
-// Sprite player;
 Sprite player;
 SDL_Rect player_clip;
 
@@ -191,7 +189,8 @@ side branchPositions[NUM_BRANCHES];
 // Cosas de Audio
 Mix_Music* sword_sound;
 Mix_Music* dead_sound;
-Mix_Music* bee_sound;
+// TODO: Deberia haber un audio para la abeja
+// Mix_Music* bee_sound;
 
 
 // Are the clouds currently on screen?
@@ -199,16 +198,16 @@ bool cloud1Active = false;
 bool cloud2Active = false;
 bool cloud3Active = false;
 
-// How fast is each cloud?
+// Velocidad de las nubes
 float cloud1Speed = 0.0f;
 float cloud2Speed = 0.0f;
 float cloud3Speed = 0.0f;
 
-// Is the bee currently moving?
+// Si la abeja se esta moviendo o no
 bool beeActive = false;
 
-// How fast can the bee fly
-// This will hold the speed, in pixels per second, at which our bee will fly across the screen.
+// Que tan rapido puede volar la abeja
+// Almacena la velocidad, en pixeles por segundo.
 float beeSpeed = 0.0f;
 
 
@@ -335,7 +334,7 @@ int main(int argc, char* argv[])
                 // Play a chop sound
                 if(Mix_PlayMusic(sword_sound, 1) == -1) {
                     fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
-                    // No hay sonido, pero deberia seguir ejecutandose aunque no haya sonido...
+                    // No hay sonido, pero no es un error critico...
                 }
             }
             
@@ -373,7 +372,7 @@ int main(int argc, char* argv[])
                 //Play a chop sound
                 if(Mix_PlayMusic(sword_sound, 1) == -1) {
                     fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
-                    // No hay sonido, pero deberia seguir ejecutandose aunque no haya sonido...
+                    // No hay sonido, pero no es un error critico...
                 }
                 
             }
@@ -383,16 +382,16 @@ int main(int argc, char* argv[])
         //  Actualiza la escena
         */
         
-        // Mide el tiempo
         current_time = SDL_GetTicks();
         
-        // Dormir el proceso hasta el target time
+        // Dormir el proceso hasta el target time (Bloquear a cierta cantidad de FPS)
         int time_to_wait = FRAME_TARGET_TIME - (current_time - last_frame_time);
         if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
         {
             SDL_Delay(time_to_wait);
         }
         
+        // El valor de dt es una fraccion de 1 que representa cuanto tiempo paso desde el frame anterior
         float dt = (current_time - last_frame_time) / 1000.0f;
         last_frame_time = current_time;
         
@@ -440,7 +439,6 @@ int main(int argc, char* argv[])
             else
             {
                 // Move the bee
-                // The value of dt will be a fraction of 1 that represents how long the previous frame of the animation took.
                 bee.rect.x -= (beeSpeed * dt);
                 
                 // Has the bee reached the right hand edge of the screen? 
@@ -658,7 +656,7 @@ int main(int argc, char* argv[])
         render_sprite(&bee);
         
         // Draw the player animated
-        draw_player(dt, player_state);
+        draw_player(dt, &player_state);
         
         // Draw the flying log
         render_sprite(&spriteLog);
@@ -1083,8 +1081,8 @@ void render_sprite(Sprite* sprite)
 
 void shutdown_game()
 {
-    // Terminar SDL_Mix
-    Mix_CloseAudio ();
+    // Termina SDL_Mix
+    Mix_CloseAudio();
     Mix_Quit();
     
     SDL_DestroyRenderer(renderer);
@@ -1145,7 +1143,9 @@ bool load_player_animations(Sprite *player_sprite)
 }
 
 
-void draw_player(float dt, enum Player_State anim_state)
+// Animacion del jugador
+// TODO: Deberia limpiar este codigo
+void draw_player(float dt, enum Player_State *anim_state)
 {
     // NOTE: Esto no deberia ser static
     static float passed_time = 0.0f;
@@ -1161,7 +1161,7 @@ void draw_player(float dt, enum Player_State anim_state)
     passed_time += dt;
     
     
-    if (anim_state == IDLE)
+    if (*anim_state == IDLE)
     {
         attacking_animation_frame = IDLE_FRAMES;
         
@@ -1169,7 +1169,6 @@ void draw_player(float dt, enum Player_State anim_state)
         
         if (passed_time >= frame_time)
         {
-            // Se ejecuta en loop
             idle_animation_frame = (idle_animation_frame + 1) % IDLE_FRAMES;
             passed_time = 0.0f;
             animation_frame = idle_animation_frame;
@@ -1177,7 +1176,7 @@ void draw_player(float dt, enum Player_State anim_state)
     }
     
     
-    if (anim_state == ATTACKING)
+    if (*anim_state == ATTACKING)
     {
         if (restart_anim)
         {
@@ -1198,7 +1197,8 @@ void draw_player(float dt, enum Player_State anim_state)
             } else
             {
                 attacking_animation_frame = IDLE_FRAMES;
-                player_state = IDLE;
+                //player_state = IDLE;
+                *anim_state = IDLE;
                 animation_frame = 0;
                 idle_animation_frame = 0;
             }
@@ -1208,13 +1208,11 @@ void draw_player(float dt, enum Player_State anim_state)
     
     if (player_side == RIGTH)
     {
-        //SDL_RenderCopyEx(renderer, player_animations[animation_frame], NULL, &player.rect, 0.0f, NULL, SDL_FLIP_HORIZONTAL);
         SDL_RenderCopyEx(renderer, player_animations[animation_frame], &player_clip, &player.rect, 0.0f, NULL, SDL_FLIP_HORIZONTAL);
     }
     
     if (player_side == LEFT)
     {
-        //SDL_RenderCopy(renderer, player_animations[animation_frame], NULL, &player.rect);
         SDL_RenderCopy(renderer, player_animations[animation_frame], &player_clip, &player.rect);
     }
 }
