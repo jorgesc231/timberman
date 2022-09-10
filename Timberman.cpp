@@ -609,7 +609,7 @@ int main(int argc, char* argv[])
         render_sprite(&background);
         
         // Draw the "clouds"
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 2; i++)
         {
             render_sprite(&nubes[i]);
         }
