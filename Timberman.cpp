@@ -710,7 +710,7 @@ bool init()
     
     //SDL_Init(SDL_INIT_EVERYTHING);
 
-    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK) < 0)
+    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
     {
         printf("No se pudo inicializar SDL - Error: %s\n", SDL_GetError());
 
@@ -769,7 +769,6 @@ bool init()
     #endif
     }
     else {
-        fprintf(stdout, "Audio inicializado correctamente\n");
         audio = true;
     }
     
@@ -922,6 +921,7 @@ bool load_media()
     
     
 #if 1
+    // NOTE: Fallar en cargar el audio no es un error critico
     // Carga los efectos de sonido 
     if (audio) {
         // Initialize the mixer API.
@@ -929,35 +929,27 @@ bool load_media()
         int open_audio = Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048);
         if (open_audio == -1)
         {
+            printf("Error al inicializar el dispositivo de audio.\n");
             printf("SDL_Mix Error: %s\n", Mix_GetError());
-            success = false;
-            shutdown_game();
 
-            show_error_window("Error al cargar audio", "Error al inicializar el dispositivo de audio.");
+            audio = false;
         }
+        else {
+            // Audio de corte
+            sword_sound = Mix_LoadMUS(SOUNDS_PATH "sword_1.ogg");
+            if (!sword_sound)
+            {
+                printf("Error al cargar el efecto de sonido de corte: assets/sounds/sword_1.ogg\n");
+                printf("SDL_Mix Error: %s\n", Mix_GetError());
+            }
 
-        // Audio de corte
-        sword_sound = Mix_LoadMUS(SOUNDS_PATH "sword_1.ogg");
-        if (!sword_sound)
-        {
-            printf("SDL_Mix Error: %s\n", Mix_GetError());
-            success = false;
-            shutdown_game();
-
-            show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de corte: assets/sounds/sword_1.ogg");
-
-            // NOTE: Esto podria ser un error critico...
-        }
-
-        // Audio de muerte
-        dead_sound = Mix_LoadMUS(SOUNDS_PATH "bone_crushing.wav");
-        if (!dead_sound)
-        {
-            printf("SDL_Mix Error: %s\n", Mix_GetError());
-            success = false;
-            shutdown_game();
-
-            show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de muerte: assets/sounds/bone_crushing.wav");
+            // Audio de muerte
+            dead_sound = Mix_LoadMUS(SOUNDS_PATH "bone_crushing.wav");
+            if (!dead_sound)
+            {
+                printf("Error al cargar el efecto de sonido de muerte: assets/sounds/bone_crushing.wav\n");
+                printf("SDL_Mix Error: %s\n", Mix_GetError());
+            }
         }
     }
 #endif
