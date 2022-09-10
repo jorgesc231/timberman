@@ -985,8 +985,8 @@ bool draw_text(SDL_Texture** texture, SDL_Rect *rect, const char* text, SDL_Colo
         text = " ";
     
 #ifdef RPI1
-    //text_surface = TTF_RenderText_Solid(fuente, text, text_color);
-    text_surface = TTF_RenderText_Shaded(fuente, text, text_color);
+    text_surface = TTF_RenderText_Solid(fuente, text, text_color);
+    //text_surface = TTF_RenderText_Shaded(fuente, text, text_color, 0);
 #else
     text_surface = TTF_RenderText_Blended(fuente, text, text_color);
 #endif
