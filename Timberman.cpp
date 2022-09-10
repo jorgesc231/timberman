@@ -38,8 +38,9 @@
 #define ATTACK_FRAMES 3
 #define TOTAL_FRAMES (IDLE_FRAMES + ATTACK_FRAMES)
 
-bool restart_anim = false;
+bool audio = false;
 
+bool restart_anim = false;
 
 typedef struct sprite
 {
@@ -56,7 +57,6 @@ struct game_state
     
     bool player_dead;
     
-    
     int score;
     
     // Control the player input
@@ -72,12 +72,9 @@ struct game_state
 // Left or Right
 enum side { LEFT, RIGTH, NONE };
 
-enum Player_State { 
-    
+enum Player_State {   
     IDLE, 
     ATTACKING, 
-    MOVING  
-    
 } player_state = IDLE;
 
 
@@ -92,14 +89,14 @@ SDL_Color color_red   = { 0xFF, 0x00, 0x00, 0xFF };
 bool init();
 bool load_media();
 Sprite load_sprite(const char* path, SDL_Renderer *renderer);
-void render_sprite(Sprite* sprite);
-bool load_player_animations(Sprite *player_sprite);
-void draw_player(float dt, enum Player_State *anim_state);
+bool load_player_animations(Sprite* player_sprite);
 
+void render_sprite(Sprite* sprite);
+void draw_player(float dt, enum Player_State *anim_state);
 bool draw_text(SDL_Texture** texture, SDL_Rect *rect, const char* text, SDL_Color text_color, TTF_Font* fuente);
+void set_message(const char* text);
 
 void updateBranches(int seed);
-void set_message(const char* text);
 
 void shutdown_game();
 void show_error_window(const char* titulo, const char* msg);
@@ -129,7 +126,7 @@ int piso_height = 100;
 
 SDL_Window* window     = NULL;
 SDL_Renderer* renderer = NULL;
-SDL_Event eventos;
+SDL_Event evento;
 
 // Globally used fonts
 TTF_Font* font_50 = NULL;
@@ -137,7 +134,6 @@ TTF_Font* font_40 = NULL;
 
 
 // Text stuff
-
 #define MSG_MAX_LEN 128
 
 char message_text[MSG_MAX_LEN] = "Enter para empezar!";
@@ -192,7 +188,6 @@ Mix_Music* dead_sound;
 // TODO: Deberia haber un audio para la abeja
 // Mix_Music* bee_sound;
 
-
 // Are the clouds currently on screen?
 bool cloud1Active = false;
 bool cloud2Active = false;
@@ -221,9 +216,9 @@ int main(int argc, char* argv[])
     
     while (state.running)
     {
-        while (SDL_PollEvent(&eventos))
+        while (SDL_PollEvent(&evento))
         {
-            switch (eventos.type)
+            switch (evento.type)
             {
                 case SDL_QUIT:
                 {
@@ -232,19 +227,19 @@ int main(int argc, char* argv[])
                 
                 case SDL_KEYDOWN:
                 {
-                    if (eventos.key.keysym.sym == SDLK_RETURN)
+                    if (evento.key.keysym.sym == SDLK_RETURN)
                     {
                         state.return_pressed = true;
                     }
-                    else if (eventos.key.keysym.sym == SDLK_ESCAPE)
+                    else if (evento.key.keysym.sym == SDLK_ESCAPE)
                     {
                         state.running = false;
                     }
-                    else if (eventos.key.keysym.sym == SDLK_RIGHT)
+                    else if (evento.key.keysym.sym == SDLK_RIGHT)
                     {
                         state.right_arrow = true;
                     }
-                    else if (eventos.key.keysym.sym == SDLK_LEFT)
+                    else if (evento.key.keysym.sym == SDLK_LEFT)
                     {
                         state.left_arrow = true;
                     }
@@ -252,7 +247,7 @@ int main(int argc, char* argv[])
                 
                 case SDL_KEYUP:
                 {
-                    if (eventos.key.keysym.sym == SDLK_RETURN)
+                    if (evento.key.keysym.sym == SDLK_RETURN)
                     {
                         if (state.return_pressed)
                         {
@@ -331,10 +326,12 @@ int main(int argc, char* argv[])
                 state.right_arrow = false;
                 state.acceptInput = false;
                 
-                // Play a chop sound
-                if(Mix_PlayMusic(sword_sound, 1) == -1) {
-                    fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
-                    // No hay sonido, pero no es un error critico...
+                if (audio) {
+                    // Play a chop sound
+                    if (Mix_PlayMusic(sword_sound, 1) == -1) {
+                        fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
+                        // No hay sonido, pero no es un error critico...
+                    }
                 }
             }
             
@@ -369,10 +366,12 @@ int main(int argc, char* argv[])
                 state.left_arrow = false;
                 state.acceptInput = false;
                 
-                //Play a chop sound
-                if(Mix_PlayMusic(sword_sound, 1) == -1) {
-                    fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
-                    // No hay sonido, pero no es un error critico...
+                if (audio) {
+                    //Play a chop sound
+                    if (Mix_PlayMusic(sword_sound, 1) == -1) {
+                        fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
+                        // No hay sonido, pero no es un error critico...
+                    }
                 }
                 
             }
@@ -597,9 +596,11 @@ int main(int argc, char* argv[])
                 
                 state.player_dead = true;
                 
-                // Play the dead sound
-                if(Mix_PlayMusic(dead_sound, 1) == -1) {
-                    fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
+                if (audio) {
+                    // Play the dead sound
+                    if (Mix_PlayMusic(dead_sound, 1) == -1) {
+                        fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
+                    }
                 }
             }
         }
@@ -707,12 +708,13 @@ bool init()
 {
     bool success = false;
     
-    SDL_Init(SDL_INIT_EVERYTHING | SDL_INIT_AUDIO);
+    //SDL_Init(SDL_INIT_EVERYTHING);
+
+    SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK);
     
     window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    //renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-    
+        
     if (!window || !renderer)
     {
         show_error_window("Error al inicializar SDL", 
@@ -745,10 +747,18 @@ bool init()
     int initted = Mix_Init (flags);
     if ((initted & flags) != flags)
     {
-        fprintf(stderr, "Mix_Init: %s\n", Mix_GetError());
+        fprintf(stderr, "Error al inicializar SDL_Mix: %s\n", Mix_GetError());
         
-        show_error_window("Error al inicializar SDL_Mix",
-                          "No se pudo inicializar SDL_Mix");
+    #ifdef _DEBUG
+        fprintf(stderr, "%s\n", SDL_GetError());
+        ASSERT(false);
+            
+    #else
+        audio = false;
+    #endif
+    }
+    else {
+        audio = true;
     }
     
     
@@ -837,7 +847,7 @@ bool load_media()
     
     
     background = load_sprite(GRAPHICS_PATH "background/sky01.png", renderer);
-    nubes[0] = load_sprite(GRAPHICS_PATH "nubes/cloud4.png", renderer);
+    nubes[0]   = load_sprite(GRAPHICS_PATH "nubes/cloud4.png", renderer);
     nubes[0].rect.x = -nubes[0].rect.w;
     //nubes[0].rect.x = 0;
     
@@ -900,45 +910,44 @@ bool load_media()
     
     
 #if 1
-    // Prepare the sound
-    
-    // Initialize the mixer API.
-    //This must be called before using other functions in this library.
-    int open_audio = Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048);
-    if (open_audio == -1)
-    {
-        printf("SDL_Mix Error: %s\n", Mix_GetError());
-        success = false;
-        shutdown_game();
-        
-        show_error_window("Error al cargar audio", "Error al inicializar el dispositivo de audio.");
+    // Carga los efectos de sonido 
+    if (audio) {
+        // Initialize the mixer API.
+        // This must be called before using other functions in this library.
+        int open_audio = Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 2048);
+        if (open_audio == -1)
+        {
+            printf("SDL_Mix Error: %s\n", Mix_GetError());
+            success = false;
+            shutdown_game();
+
+            show_error_window("Error al cargar audio", "Error al inicializar el dispositivo de audio.");
+        }
+
+        // Audio de corte
+        sword_sound = Mix_LoadMUS(SOUNDS_PATH "sword_1.ogg");
+        if (!sword_sound)
+        {
+            printf("SDL_Mix Error: %s\n", Mix_GetError());
+            success = false;
+            shutdown_game();
+
+            show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de corte: assets/sounds/sword_1.ogg");
+
+            // NOTE: Esto podria ser un error critico...
+        }
+
+        // Audio de muerte
+        dead_sound = Mix_LoadMUS(SOUNDS_PATH "bone_crushing.wav");
+        if (!dead_sound)
+        {
+            printf("SDL_Mix Error: %s\n", Mix_GetError());
+            success = false;
+            shutdown_game();
+
+            show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de muerte: assets/sounds/bone_crushing.wav");
+        }
     }
-    
-    // Audio de chop
-    
-    sword_sound = Mix_LoadMUS (SOUNDS_PATH "sword_1.ogg");
-    if (!sword_sound)
-    {
-        printf("SDL_Mix Error: %s\n", Mix_GetError());
-        success = false;
-        shutdown_game();
-        
-        show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de corte: assets/sounds/sword_1.ogg");
-        
-        // NOTE: Esto podria ser un error critico...
-    }
-    
-    // Audio de muerte
-    dead_sound = Mix_LoadMUS(SOUNDS_PATH "bone_crushing.wav");
-    if (!dead_sound)
-    {
-        printf("SDL_Mix Error: %s\n", Mix_GetError());
-        success = false;
-        shutdown_game();
-        
-        show_error_window("Error al cargar efecto de sonido", "Error al cargar el efecto de sonido de muerte: assets/sounds/bone_crushing.wav");
-    }
-    
 #endif
     
     return success;
@@ -1025,7 +1034,7 @@ void updateBranches(int seed)
     }
 }
 
-
+// NOTE: Esto se puede mejorar
 void set_message(const char* text)
 {
     int i = 0;
