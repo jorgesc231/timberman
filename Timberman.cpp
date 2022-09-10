@@ -710,10 +710,21 @@ bool init()
     
     //SDL_Init(SDL_INIT_EVERYTHING);
 
-    SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK);
+    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_JOYSTICK) < 0)
+    {
+        printf("No se pudo inicializar SDL - Error: %s\n", SDL_GetError());
+
+        show_error_window("Error al inicializar SDL",
+            "No se pudo inicializar SDL.");
+    }
     
+#ifdef RPI1
+    window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+#else
     window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+#endif
         
     if (!window || !renderer)
     {
@@ -758,6 +769,7 @@ bool init()
     #endif
     }
     else {
+        fprintf(stdout, "Audio inicializado correctamente\n");
         audio = true;
     }
     
