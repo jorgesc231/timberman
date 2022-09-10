@@ -51,7 +51,6 @@ typedef struct sprite
 
 struct game_state
 {
-    // Track whether the game is running
     bool running;
     bool paused;
     
@@ -288,6 +287,12 @@ int main(int argc, char* argv[])
                         state.acceptInput = true;
                     }
                     
+                } break;
+
+                case SDL_WINDOWEVENT:
+                {
+                    if (evento.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                        SDL_Log("Window %d size changed to %dx%d", evento.window.windowID, evento.window.data1, evento.window.data2);
                 } break;
             }
         }
@@ -793,7 +798,10 @@ bool init()
     
     success = load_media();
     
-    
+#ifdef RPI1
+    if (SDL_ShowCursor(SDL_DISABLE));
+#endif
+
     return success;
 }
 
