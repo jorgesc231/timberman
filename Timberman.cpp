@@ -145,9 +145,6 @@ SDL_Rect score_text_rect = { 0 };
 
 SDL_Texture* nube_text_texture = NULL;
 
-SDL_Texture* dt_texture = NULL;
-char dt_text[50];
-
 
 // Sprites
 
@@ -164,7 +161,7 @@ Sprite pasto;
 Sprite bee;
 
 Sprite background;
-Sprite nubes[3];
+Sprite nubes[2];
 
 Sprite spriteLog;
 Sprite branches[NUM_BRANCHES];
@@ -188,12 +185,10 @@ Mix_Music* dead_sound;
 // Mix_Music* bee_sound;
 
 // Are the clouds currently on screen?
-bool cloud1Active = false;
 bool cloud2Active = false;
 bool cloud3Active = false;
 
 // Velocidad de las nubes
-float cloud1Speed = 0.0f;
 float cloud2Speed = 0.0f;
 float cloud3Speed = 0.0f;
 
@@ -457,34 +452,8 @@ int main(int argc, char* argv[])
                 }
             }
             
-            // Manejo de las nubes
+            // Manejo de las nubes          
             // Cloud 1
-            if (!cloud1Active)
-            {
-                // How fast is the cloud
-                srand((int)time(0) * 10);
-                cloud1Speed = (rand() % 30) + 100.0f;
-                
-                // Que tan alto aparece la nube
-                srand((int)time(0) * 10);
-                nubes[0].rect.y = (rand() % 150);
-                nubes[0].rect.x = -200;
-                
-                cloud1Active = true;
-            }
-            else
-            {
-                nubes[0].rect.x += (int)(cloud1Speed * dt);
-                
-                // Si la nube pasa del lado derecho de la pantalla
-                if (nubes[0].rect.x > SCREEN_WIDTH)
-                {
-                    // Lo prepara para que sea otra nube en el sig frame
-                    cloud1Active = false;
-                }
-            }
-            
-            // Cloud 2
             if (!cloud2Active)
             {
                 // How fast is the cloud
@@ -493,24 +462,24 @@ int main(int argc, char* argv[])
                 
                 // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
-                nubes[1].rect.y = (rand() % 350) - 250;
-                nubes[1].rect.x = -200;
+                nubes[0].rect.y = (rand() % 350) - 250;
+                nubes[0].rect.x = -200;
                 
                 cloud2Active = true;
             }
             else
             {
-                nubes[1].rect.x += (int)(cloud2Speed * dt);
+                nubes[0].rect.x += (int)(cloud2Speed * dt);
                 
                 // Si la nube pasa del lado derecho de la pantalla
-                if (nubes[1].rect.x > SCREEN_WIDTH)
+                if (nubes[0].rect.x > SCREEN_WIDTH)
                 {
                     // Lo prepara para que sea otra nube en el sig frame
                     cloud2Active = false;
                 }
             }
             
-            // Cloud 3
+            // Cloud 2
             if (!cloud3Active)
             {
                 // How fast is the cloud
@@ -519,17 +488,17 @@ int main(int argc, char* argv[])
                 
                 // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
-                nubes[2].rect.y = (rand() % 450) - 150;
-                nubes[2].rect.x = -200;
+                nubes[1].rect.y = (rand() % 450) - 150;
+                nubes[1].rect.x = -200;
                 
                 cloud3Active = true;
             }
             else
             {
-                nubes[2].rect.x += (int)(cloud3Speed * dt);
+                nubes[1].rect.x += (int)(cloud3Speed * dt);
                 
                 // Si la nube pasa del lado derecho de la pantalla
-                if (nubes[2].rect.x > SCREEN_WIDTH)
+                if (nubes[1].rect.x > SCREEN_WIDTH)
                 {
                     // Lo prepara para que sea otra nube en el sig frame
                     cloud3Active = false;
@@ -866,15 +835,12 @@ bool load_media()
     
     
     background = load_sprite(GRAPHICS_PATH "background/sky01.png", renderer);
-    nubes[0]   = load_sprite(GRAPHICS_PATH "nubes/cloud4.png", renderer);
-    nubes[0].rect.x = -nubes[0].rect.w;
-    //nubes[0].rect.x = 0;
     
-    nubes[1] = load_sprite(GRAPHICS_PATH "nubes/cloud5.png", renderer);
-    nubes[1].rect.x = -nubes[1].rect.w;
+    nubes[0] = load_sprite(GRAPHICS_PATH "nubes/cloud5.png", renderer);
+    nubes[0].rect.x = -nubes[1].rect.w;
     
-    nubes[2] = load_sprite(GRAPHICS_PATH "nubes/cloud6.png", renderer);
-    nubes[2].rect.x = -nubes[2].rect.w;
+    nubes[1] = load_sprite(GRAPHICS_PATH "nubes/cloud6.png", renderer);
+    nubes[1].rect.x = -nubes[2].rect.w;
     
     
     pasto = { NULL,
