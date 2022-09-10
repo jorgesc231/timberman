@@ -28,8 +28,8 @@
 #define FPS 60
 #define FRAME_TARGET_TIME (1000.0f / FPS)
 
-#define SCREEN_WIDTH 768
-#define SCREEN_HEIGHT 760
+#define DEFAULT_SCREEN_WIDTH 768
+#define DEFAULT_SCREEN_HEIGHT 760
 
 // #define NUM_BRANCHES 6  (falla)
 #define NUM_BRANCHES 5
@@ -37,6 +37,8 @@
 #define IDLE_FRAMES 2
 #define ATTACK_FRAMES 3
 #define TOTAL_FRAMES (IDLE_FRAMES + ATTACK_FRAMES)
+
+bool window_size_changed = false;
 
 bool audio = false;
 
@@ -110,8 +112,8 @@ float timeBarStartWidth = 400;
 int timeBarHeight = 50;
 
 SDL_Rect time_bar = {
-    SCREEN_WIDTH / 2 - (int)(timeBarStartWidth / 2), 
-    SCREEN_HEIGHT - timeBarHeight - 10, 
+    DEFAULT_SCREEN_WIDTH / 2 - (int)(timeBarStartWidth / 2), 
+    DEFAULT_SCREEN_HEIGHT - timeBarHeight - 10, 
     (int)timeBarStartWidth, timeBarHeight
 };
 
@@ -120,7 +122,7 @@ float timeRemaining = 6.0f;
 // Cantidad de pixeles por segundo que se tiene que achicar la barra de tiempo.
 float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
 
-int tree_width = SCREEN_WIDTH / 4;
+int tree_width = DEFAULT_SCREEN_WIDTH / 4;
 int piso_height = 100;
 
 SDL_Window* window     = NULL;
@@ -133,13 +135,13 @@ TTF_Font* font_40 = NULL;
 
 
 // Text stuff
-#define MSG_MAX_LEN 128
+#define MSG_MAX_LEN 64
 
 char message_text[MSG_MAX_LEN] = "Enter para empezar!";
 SDL_Texture* message_text_texture = NULL;
 SDL_Rect message_text_rect = { 0 };
 
-char score_text[50];
+char score_text[20];
 SDL_Texture* score_text_texture = NULL;
 SDL_Rect score_text_rect = { 0 };
 
@@ -286,8 +288,16 @@ int main(int argc, char* argv[])
 
                 case SDL_WINDOWEVENT:
                 {
-                    if (evento.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+                    if (evento.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                         SDL_Log("Window %d size changed to %dx%d", evento.window.windowID, evento.window.data1, evento.window.data2);
+
+                        window_size_changed = (evento.window.data1 != DEFAULT_SCREEN_WIDTH) && (evento.window.data2 != DEFAULT_SCREEN_HEIGHT);
+
+                        if (window_size_changed) {
+                            SDL_SetWindowSize(window, evento.window.data1, evento.window.data2);
+                            //SDL_SetWindowDisplayMode();
+                        }
+                    }
                 } break;
             }
         }
@@ -412,7 +422,7 @@ int main(int argc, char* argv[])
                 state.acceptInput = false;
                 
                 //Reposition the text based on its new size   
-                message_text_rect.x = SCREEN_WIDTH / 2 - message_text_rect.w / 2 + 100;
+                message_text_rect.x = DEFAULT_SCREEN_WIDTH / 2 - message_text_rect.w / 2 + 100;
                 
                 // Cambia el mensaje que se le muestra al jugador
                 set_message("Se Termino el Tiempo!!");
@@ -430,7 +440,7 @@ int main(int argc, char* argv[])
                 // How high is the bee   
                 srand((int)time(0) * 10);
                 
-                int height = (rand() % (SCREEN_HEIGHT - bee.rect.w));
+                int height = (rand() % (DEFAULT_SCREEN_HEIGHT - bee.rect.w));
                 
                 bee.rect.x = 1000;
                 bee.rect.y = height;
@@ -472,7 +482,7 @@ int main(int argc, char* argv[])
                 nubes[0].rect.x += (int)(cloud2Speed * dt);
                 
                 // Si la nube pasa del lado derecho de la pantalla
-                if (nubes[0].rect.x > SCREEN_WIDTH)
+                if (nubes[0].rect.x > DEFAULT_SCREEN_WIDTH)
                 {
                     // Lo prepara para que sea otra nube en el sig frame
                     cloud2Active = false;
@@ -498,7 +508,7 @@ int main(int argc, char* argv[])
                 nubes[1].rect.x += (int)(cloud3Speed * dt);
                 
                 // Si la nube pasa del lado derecho de la pantalla
-                if (nubes[1].rect.x > SCREEN_WIDTH)
+                if (nubes[1].rect.x > DEFAULT_SCREEN_WIDTH)
                 {
                     // Lo prepara para que sea otra nube en el sig frame
                     cloud3Active = false;
@@ -506,7 +516,7 @@ int main(int argc, char* argv[])
             }
             
             // Update the score text
-            snprintf(score_text, 50, "Score = %d", state.score);
+            snprintf(score_text, 20, "Score = %d", state.score);
             
             
             // Update the branch sprites
@@ -541,7 +551,7 @@ int main(int argc, char* argv[])
                 spriteLog.rect.y += (int)(logSpeedY * dt);
                 
                 // Has the log reached the right hand edge?
-                if (spriteLog.rect.x < -100 || spriteLog.rect.x > SCREEN_WIDTH)
+                if (spriteLog.rect.x < -100 || spriteLog.rect.x > DEFAULT_SCREEN_WIDTH)
                 {
                     // Set it up ready to be a whole new log next frame
                     logActive = false;
@@ -661,8 +671,8 @@ int main(int argc, char* argv[])
         
         if (state.paused)
         {
-            message_text_rect.x = SCREEN_WIDTH / 2 - message_text_rect.w / 2;
-            message_text_rect.y = SCREEN_HEIGHT / 2 - message_text_rect.h / 2;
+            message_text_rect.x = DEFAULT_SCREEN_WIDTH / 2 - message_text_rect.w / 2;
+            message_text_rect.y = DEFAULT_SCREEN_HEIGHT / 2 - message_text_rect.h / 2;
             
             draw_text(&message_text_texture, &message_text_rect, message_text, color_red, font_50);
         }
@@ -684,7 +694,7 @@ bool init()
     
     //SDL_Init(SDL_INIT_EVERYTHING);
 
-    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
+    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
     {
         printf("No se pudo inicializar SDL - Error: %s\n", SDL_GetError());
 
@@ -693,10 +703,10 @@ bool init()
     }
     
 #ifdef RPI1
-    window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 #else
-    window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
+    window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 #endif
         
@@ -779,16 +789,16 @@ bool load_media()
     bool success = true;
     
     // Inicializa el score text
-    snprintf(score_text, 50, "Score = %d", state.score);
+    snprintf(score_text, 20, "Score = %d", state.score);
     
     // Inicializa el arbol (sin textura por ahora)
     tree = { NULL, 
-        { SCREEN_WIDTH / 2 - tree_width / 2, 0, tree_width, SCREEN_HEIGHT - piso_height }, 
+        { DEFAULT_SCREEN_WIDTH / 2 - tree_width / 2, 0, tree_width, DEFAULT_SCREEN_HEIGHT - piso_height }, 
         { 0x68, 0x4E, 0x1D, 0xFF }  };
     
     piso = { 
         NULL, 
-        { 0, SCREEN_HEIGHT - piso_height, SCREEN_WIDTH, piso_height }, 
+        { 0, DEFAULT_SCREEN_HEIGHT - piso_height, DEFAULT_SCREEN_WIDTH, piso_height }, 
         { 0x82, 0xD8, 0x00, 0xFF} 
     };
     
@@ -840,11 +850,11 @@ bool load_media()
     nubes[0].rect.x = -nubes[1].rect.w;
     
     nubes[1] = load_sprite(GRAPHICS_PATH "nubes/cloud6.png", renderer);
-    nubes[1].rect.x = -nubes[2].rect.w;
+    nubes[1].rect.x = -nubes[1].rect.w;
     
     
     pasto = { NULL,
-        { 0, SCREEN_HEIGHT - piso_height - 100, SCREEN_WIDTH, piso_height + 100},
+        { 0, DEFAULT_SCREEN_HEIGHT - piso_height - 100, DEFAULT_SCREEN_WIDTH, piso_height + 100},
         { 0x82, 0xD8, 0x00, 0xFF}
     };
     
