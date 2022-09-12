@@ -265,10 +265,7 @@ int main(int argc, char* argv[])
                             {
                                 branchPositions[i] = NONE;
                             }
-                            
-                            // Make sure the gravestone is hidden
-                            //spriteRIP.rect.x = camara.x - 1000;
-                            
+                                                      
                             // Move the player into position
                             player.rect.x = PLAYER_POSITION_LEFT;
                             player.rect.y = piso.rect.y - player.rect.h;

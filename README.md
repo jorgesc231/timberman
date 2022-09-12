@@ -4,14 +4,19 @@ Una copia mal hecha y simplificada del juego Timberman:
 
 	https://store.steampowered.com/app/398710/Timberman/
 
+
 ## TODO
 
 - Agregar Texturas
 - Agregar mas efectos de audio
 - Varios otros bugs
-- Aumentar el timpo que se de por punto
+- Instrucciones para compilar
 
-- Portarlo a Android (?)
+- Portarlo a:
+1. Raspberry Pi 1 (Hecho)
+2. Web
+3. Linux
+4. Android
 
 
 ## Compilar
