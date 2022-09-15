@@ -6,6 +6,10 @@
 #include <SDL_ttf.h>
 #include <SDL_mixer.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
@@ -16,9 +20,15 @@
 #define ASSERT(x) 
 #endif
 
+#ifdef __EMSCRIPTEN__
+#define GRAPHICS_PATH   "assets/graphics/"
+#define FONTS_PATH      "assets/fonts/"
+#define SOUNDS_PATH     "assets/sounds/"
+#else
 #define GRAPHICS_PATH   "../../assets/graphics/"
 #define FONTS_PATH      "../../assets/fonts/"
 #define SOUNDS_PATH     "../../assets/sounds/"
+#endif
 
 #define FPS 60
 #define FRAME_TARGET_TIME (1000.0f / FPS)
@@ -86,6 +96,7 @@ bool load_media();
 Sprite load_sprite(const char* path, SDL_Renderer *renderer);
 bool load_player_animations(Sprite* player_sprite);
 
+void do_main_loop();    // Loop principal (En otra funcion para que funcione el port a web)
 void resize_elements(int new_width, int new_height);
 
 void render_sprite(Sprite* sprite);
@@ -209,273 +220,295 @@ int main(int argc, char* argv[])
     state.running = init();
     
     ASSERT(state.running);
-    
+
+
+#ifndef __EMSCRIPTEN__
     SDL_RaiseWindow(window);
     
+    do_main_loop();
+    
+    shutdown_game();
+
+#endif
+
+
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(do_main_loop, 0, 0);
+#endif
+
+    return 0;
+}
+
+
+void do_main_loop()
+{
+#ifndef __EMSCRIPTEN__
     while (state.running)
     {
+#endif
         while (SDL_PollEvent(&evento))
         {
+            //printf("Ejecutando ciclo principal!\n");
 #ifndef RPI1
-#ifdef _DEBUG
+//#ifdef _DEBUG
             PrintEvent(&evento);
-#endif
+//#endif
 #endif // !RPI1
             switch (evento.type)
             {
-                case SDL_QUIT:
+            case SDL_QUIT:
+            {
+                state.running = false;
+            } break;
+
+            case SDL_KEYDOWN:
+            {
+                if (evento.key.keysym.sym == SDLK_RETURN)
+                {
+                    state.return_pressed = true;
+                }
+                else if (evento.key.keysym.sym == SDLK_ESCAPE)
                 {
                     state.running = false;
-                } break;
-                
-                case SDL_KEYDOWN:
+                }
+                else if (evento.key.keysym.sym == SDLK_RIGHT)
                 {
-                    if (evento.key.keysym.sym == SDLK_RETURN)
-                    {
-                        state.return_pressed = true;
-                    }
-                    else if (evento.key.keysym.sym == SDLK_ESCAPE)
-                    {
-                        state.running = false;
-                    }
-                    else if (evento.key.keysym.sym == SDLK_RIGHT)
-                    {
-                        state.right_arrow = true;
-                    }
-                    else if (evento.key.keysym.sym == SDLK_LEFT)
-                    {
-                        state.left_arrow = true;
-                    }
-                } break;
-                
-                case SDL_KEYUP:
+                    state.right_arrow = true;
+                }
+                else if (evento.key.keysym.sym == SDLK_LEFT)
                 {
-                    if (evento.key.keysym.sym == SDLK_RETURN)
-                    {
-                        if (state.return_pressed)
-                        {
-                            state.paused = false;
-                            
-                            // Reset the time and the score   
-                            state.score = 0;
-                            timeRemaining = 6.0f;
-                            
-                            // Make all the branches disappear
-                            for (int i = 1; i < NUM_BRANCHES; i++)
-                            {
-                                branchPositions[i] = NONE;
-                            }
-                                                      
-                            // Move the player into position
-                            player.rect.x = PLAYER_POSITION_LEFT;
-                            player.rect.y = piso.rect.y - player.rect.h;
-                            
-                            state.player_dead = false;
-                            restart_anim = true;
+                    state.left_arrow = true;
+                }
+            } break;
 
-                            // The player starts on the left
-                            player_side = LEFT;
-                            player_state = IDLE;
-                            
-                            state.acceptInput = true;
-                            
-                            state.return_pressed = false;
-                            state.left_arrow = false;
-                            state.right_arrow = false;
-                        }
-                    }
-                    
-                    if (!state.paused)
+            case SDL_KEYUP:
+            {
+                if (evento.key.keysym.sym == SDLK_RETURN)
+                {
+                    if (state.return_pressed)
                     {
-                        // Listen for key presses again 
+                        state.paused = false;
+
+                        // Reset the time and the score   
+                        state.score = 0;
+                        timeRemaining = 6.0f;
+
+                        // Make all the branches disappear
+                        for (int i = 1; i < NUM_BRANCHES; i++)
+                        {
+                            branchPositions[i] = NONE;
+                        }
+
+                        // Move the player into position
+                        player.rect.x = PLAYER_POSITION_LEFT;
+                        player.rect.y = piso.rect.y - player.rect.h;
+
+                        state.player_dead = false;
+                        restart_anim = true;
+
+                        // The player starts on the left
+                        player_side = LEFT;
+                        player_state = IDLE;
+
                         state.acceptInput = true;
+
+                        state.return_pressed = false;
+                        state.left_arrow = false;
+                        state.right_arrow = false;
                     }
+                }
 
-                    if (state.acceptInput)
-                    {
-                        // handle pressing the right cursor key
-                        if (state.right_arrow && evento.key.keysym.sym == SDLK_RIGHT)
-                        {
-                            // NOTE: Prueba de reiniciar la animacion
-                            if (player_state == ATTACKING) restart_anim = true;
-
-                            // Make sure the player is on the right
-                            player_side = RIGHT;
-                            player_state = ATTACKING;
-                            state.score++;
-
-                            // Add to the amount of time remaining
-                            //timeRemaining += (2 / state.score) + .15f; // Mas dificil
-                            timeRemaining += (2 / state.score) + .18f;
-                            if (timeRemaining >= 6.0f) timeRemaining = 6.0f;
-
-                            player.rect.x = PLAYER_POSITION_RIGHT;
-
-                            // update the branches
-                            updateBranches(state.score);
-
-                            // set the log flying to the left
-                            spriteLog.rect.x = tree.rect.x;
-                            spriteLog.rect.y = player.rect.y;
-
-                            logSpeedX = -2000;
-                            logActive = true;
-
-                            state.right_arrow = false;
-                            state.acceptInput = false;
-
-                            if (audio) {
-                                // Play a chop sound
-                                if (Mix_PlayMusic(sword_sound, 1) == -1) {
-                                    fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
-                                    // No hay sonido, pero no es un error critico...
-                                }
-                            }
-                        }
-
-                        // Handle the left cursor key
-                        if (state.left_arrow && evento.key.keysym.sym == SDLK_LEFT)
-                        {
-                            // NOTE: Prueba de reiniciar la animacion
-                            if (player_state == ATTACKING) restart_anim = true;
-
-                            // Make sure the player is on the left
-                            player_side = LEFT;
-                            player_state = ATTACKING;
-
-                            state.score++;
-
-                            // Add to the amount of time remaining
-                            timeRemaining += (2 / state.score) + .15f;
-                            if (timeRemaining >= 6.0f) timeRemaining = 6.0f;
-
-                            player.rect.x = PLAYER_POSITION_LEFT;
-
-                            // Update the branches
-                            updateBranches(state.score);
-
-                            // set the log flying to the left
-                            spriteLog.rect.x = tree.rect.x;
-                            spriteLog.rect.y = player.rect.y;
-
-                            logSpeedX = 2000;
-                            logActive = true;
-
-                            state.left_arrow = false;
-                            state.acceptInput = false;
-
-                            if (audio) {
-                                //Play a chop sound
-                                if (Mix_PlayMusic(sword_sound, 1) == -1) {
-                                    fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
-                                    // No hay sonido, pero no es un error critico...
-                                }
-                            }
-
-                        }
-                    }
-                    
-                } break;
-
-                case SDL_WINDOWEVENT:
+                if (!state.paused)
                 {
-                    if (evento.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                    // Listen for key presses again 
+                    state.acceptInput = true;
+                }
+
+                if (state.acceptInput)
+                {
+                    // handle pressing the right cursor key
+                    if (state.right_arrow && evento.key.keysym.sym == SDLK_RIGHT)
+                    {
+                        // NOTE: Prueba de reiniciar la animacion
+                        if (player_state == ATTACKING) restart_anim = true;
+
+                        // Make sure the player is on the right
+                        player_side = RIGHT;
+                        player_state = ATTACKING;
+                        state.score++;
+
+                        // Add to the amount of time remaining
+                        //timeRemaining += (2 / state.score) + .15f; // Mas dificil
+                        timeRemaining += (2 / state.score) + .18f;
+                        if (timeRemaining >= 6.0f) timeRemaining = 6.0f;
+
+                        player.rect.x = PLAYER_POSITION_RIGHT;
+
+                        // update the branches
+                        updateBranches(state.score);
+
+                        // set the log flying to the left
+                        spriteLog.rect.x = tree.rect.x;
+                        spriteLog.rect.y = player.rect.y;
+
+                        logSpeedX = -2000;
+                        logActive = true;
+
+                        state.right_arrow = false;
+                        state.acceptInput = false;
+
+                        if (audio) {
+                            // Play a chop sound
+                            if (Mix_PlayMusic(sword_sound, 1) == -1) {
+                                fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
+                                // No hay sonido, pero no es un error critico...
+                            }
+                        }
+                    }
+
+                    // Handle the left cursor key
+                    if (state.left_arrow && evento.key.keysym.sym == SDLK_LEFT)
+                    {
+                        // NOTE: Prueba de reiniciar la animacion
+                        if (player_state == ATTACKING) restart_anim = true;
+
+                        // Make sure the player is on the left
+                        player_side = LEFT;
+                        player_state = ATTACKING;
+
+                        state.score++;
+
+                        // Add to the amount of time remaining
+                        timeRemaining += (2 / state.score) + .15f;
+                        if (timeRemaining >= 6.0f) timeRemaining = 6.0f;
+
+                        player.rect.x = PLAYER_POSITION_LEFT;
+
+                        // Update the branches
+                        updateBranches(state.score);
+
+                        // set the log flying to the left
+                        spriteLog.rect.x = tree.rect.x;
+                        spriteLog.rect.y = player.rect.y;
+
+                        logSpeedX = 2000;
+                        logActive = true;
+
+                        state.left_arrow = false;
+                        state.acceptInput = false;
+
+                        if (audio) {
+                            //Play a chop sound
+                            if (Mix_PlayMusic(sword_sound, 1) == -1) {
+                                fprintf(stderr, "Mix_PlayMusic: %s\n", Mix_GetError());
+                                // No hay sonido, pero no es un error critico...
+                            }
+                        }
+
+                    }
+                }
+
+            } break;
+
+            case SDL_WINDOWEVENT:
+            {
+                if (evento.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
 #ifdef _DEBUG
-                        SDL_Log("Window %d size changed to %dx%d", evento.window.windowID, evento.window.data1, evento.window.data2);
+                    SDL_Log("Window %d size changed to %dx%d", evento.window.windowID, evento.window.data1, evento.window.data2);
 #endif
 
-                        window_size_changed = (evento.window.data1 != screen_width) || (evento.window.data2 != screen_height);
+                    window_size_changed = (evento.window.data1 != screen_width) || (evento.window.data2 != screen_height);
 
-                        if (window_size_changed) {
-                            screen_width = evento.window.data1;
-                            screen_height = evento.window.data2;
+                    if (window_size_changed) {
+                        screen_width = evento.window.data1;
+                        screen_height = evento.window.data2;
 
-                            SDL_SetWindowSize(window, evento.window.data1, evento.window.data2);
-                            //SDL_SetWindowDisplayMode();
-                            resize_elements(evento.window.data1, evento.window.data2);
-                        }
+                        SDL_SetWindowSize(window, evento.window.data1, evento.window.data2);
+                        //SDL_SetWindowDisplayMode();
+                        resize_elements(evento.window.data1, evento.window.data2);
                     }
-                } break;
+                }
+            } break;
             }
         }
-        
 
-        
+
+
         /*
         //  Actualiza la escena
         */
-        
+
         current_time = SDL_GetTicks();
-        
+
         // Dormir el proceso hasta el target time (Bloquear a cierta cantidad de FPS)
         int time_to_wait = FRAME_TARGET_TIME - (current_time - last_frame_time);
         if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
         {
             SDL_Delay(time_to_wait);
         }
-        
+
         // El valor de dt es una fraccion de 1 que representa cuanto tiempo paso desde el frame anterior
         float dt = (current_time - last_frame_time) / 1000.0f;
         last_frame_time = current_time;
-        
+
         if (!state.paused)
         {
             // Subtract from the amount of time remaining
             // First we subtracted the amount of time the player has left by however long the previous frame took to execute 
             timeRemaining -= dt;
-            
+
             // size up the time bar
             // This produces exactly the correct width, relative to how long the player has left.
             time_bar.w = (int)(timeBarWidthPerSecond * timeRemaining);
-            
-            
+
+
             if (timeRemaining <= 0.0f)
             {
                 // Pause the game   
                 state.paused = true;
                 state.acceptInput = false;
-                
+
                 // Cambia el mensaje que se le muestra al jugador
                 set_message("Se Termino el Tiempo!!");
 
                 //Reposition the text based on its new size   
                 message_text_rect.x = camara.x + (camara.w / 2 - message_text_rect.w / 2 + 100);
                 message_text_rect.y = camara.y + (camara.h / 2 - message_text_rect.h / 2);
-                
-                
+
+
                 timeRemaining = 0.0f;
             }
-            
-            
+
+
             if (!beeActive)
             {
                 // How fast is the bee
                 srand((int)time(0));
                 beeSpeed = (rand() % 100) + 100.0f;
-                
+
                 // How high is the bee   
                 srand((int)time(0) * 10);
-                
+
                 int height = (rand() % (camara.h - bee.rect.w));
-                
+
                 bee.rect.x = camara.x + camara.w + bee.rect.w;
                 bee.rect.y = height;
-                
+
                 beeActive = true;
             }
             else
             {
                 // Move the bee
                 bee.rect.x -= (int)(beeSpeed * dt);
-                
+
                 if (bee.rect.x < camara.x - bee.rect.w)
                 {
                     beeActive = false;
-                    
+
                     // a new bee will be set flying at a new random height and a new random speed.
                 }
             }
-            
+
             // Manejo de las nubes          
             // Cloud 1
             if (!cloud2Active)
@@ -483,18 +516,18 @@ int main(int argc, char* argv[])
                 // How fast is the cloud
                 srand((int)time(0) * 20);
                 cloud2Speed = (rand() % 50) + 150.0f;
-                
+
                 // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
                 nubes[0].rect.y = (rand() % 350) - 250;
                 nubes[0].rect.x = camara.x - nubes[0].rect.w;
-                
+
                 cloud2Active = true;
             }
             else
             {
                 nubes[0].rect.x += (int)(cloud2Speed * dt);
-                
+
                 // Si la nube pasa del lado derecho de la pantalla
                 if (nubes[0].rect.x > (camara.x + camara.w))
                 {
@@ -502,25 +535,25 @@ int main(int argc, char* argv[])
                     cloud2Active = false;
                 }
             }
-            
+
             // Cloud 2
             if (!cloud3Active)
             {
                 // How fast is the cloud
                 srand((int)time(0) + 50);
                 cloud3Speed = (rand() % 30) + 100.0f;
-                
+
                 // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
                 nubes[1].rect.y = (rand() % 450) - 150;
                 nubes[1].rect.x = camara.x - nubes[1].rect.w;
-                
+
                 cloud3Active = true;
             }
             else
             {
                 nubes[1].rect.x += (int)(cloud3Speed * dt);
-                
+
                 // Si la nube pasa del lado derecho de la pantalla
                 if (nubes[1].rect.x > (camara.x + camara.w))
                 {
@@ -528,18 +561,18 @@ int main(int argc, char* argv[])
                     cloud3Active = false;
                 }
             }
-            
+
             // Update the score text
             snprintf(score_text, 20, "Score = %d", state.score);
-            
-            
+
+
             // Update the branch sprites
             for (int i = 0; i < NUM_BRANCHES; i++)
             {
                 //float height = i * 150;
                 int height = i * player.rect.h;
                 branches[i].rect.y = height;
-                
+
                 if (branchPositions[i] == LEFT)
                 {
                     // Move the sprite to the left side
@@ -555,15 +588,15 @@ int main(int argc, char* argv[])
                     // Hide the branch
                     branches[i].rect.x = camara.x - 3000;
                 }
-                
+
             }
-            
+
             // Handle a flying log
             if (logActive)
             {
                 spriteLog.rect.x += (int)(logSpeedX * dt);
                 spriteLog.rect.y += (int)(logSpeedY * dt);
-                
+
                 // Has the log reached the right hand edge?
                 if (spriteLog.rect.x < camara.x - 100 || spriteLog.rect.x > camara.x + camara.w)
                 {
@@ -572,25 +605,25 @@ int main(int argc, char* argv[])
                     spriteLog.rect.x = tree.rect.x;
                     spriteLog.rect.y = player.rect.y;
                 }
-                
+
             }
-            
+
             // Si el jugador es aplastado por una rama
             if (branchPositions[NUM_BRANCHES - 1] == player_side)
             {
                 // death
                 state.paused = true;
                 state.acceptInput = false;
-                
+
                 // Draw the gravestone
                 spriteRIP.rect.x = player.rect.x + player.rect.w / 2;
-                spriteRIP.rect.y = player.rect.y + player.rect.h / 2 - spriteRIP.rect.h;              
-                
+                spriteRIP.rect.y = player.rect.y + player.rect.h / 2 - spriteRIP.rect.h;
+
                 // Change the text of the message
                 set_message("Aplastado!!");
-                
+
                 state.player_dead = true;
-                
+
                 if (audio) {
                     // Play the dead sound
                     if (Mix_PlayMusic(dead_sound, 1) == -1) {
@@ -599,121 +632,119 @@ int main(int argc, char* argv[])
                 }
             }
         }
-        
-        
+
+
         // Animar que la tumba caiga
         if (state.player_dead && (spriteRIP.rect.y + spriteRIP.rect.h) < piso.rect.y)
         {
             int tumba_vel_y = 500;
             int tumba_vel_x = 0;
-            
+
             if (player_side == LEFT) tumba_vel_x = -100;
             if (player_side == RIGHT) tumba_vel_x = 100;
-            
+
             spriteRIP.rect.y += (int)(tumba_vel_y * dt);
             spriteRIP.rect.x += (int)(tumba_vel_x * dt);
         }
-        
+
         /*
         ****************************************
         Draw the scene
         ****************************************
         */
-        
+
         // Clear everything from the last frame     
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
-        
+
         // Draw our game scene here
-        
+
         // Dibuja el fondo
         render_sprite(&background);
-        
+
         // Draw the "clouds"
         for (int i = 0; i < 2; i++)
         {
             render_sprite(&nubes[i]);
         }
-        
+
         // Dibuja el "piso"
         render_sprite(&pasto);
-        
+
         // Draw the branches
         for (int i = 0; i < NUM_BRANCHES; i++)
         {
             // No tienen textura por ahora
             render_sprite(&branches[i]);
         }
-        
-        
+
+
         // Draw the "tree"
         render_sprite(&tree);
-        
+
         // Draw the player animated
         if (!state.player_dead)
             draw_player(dt, &player_state);
-        
+
         // Draw the flying log
         render_sprite(&spriteLog);
-        
+
         // Remarca el log
 #ifdef _DEBUG
         SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, 0xFF);
         SDL_RenderDrawRect(renderer, &spriteLog.rect);
 #endif
-        
-        
+
+
         // Draw the gravestone 
         if (state.player_dead)
             render_sprite(&spriteRIP);
-        
-        
+
+
         // Draw the "bee"
         render_sprite(&bee);
-        
-        
+
+
         // Draw score text
         score_text_rect.x = camara.x + 20;
         score_text_rect.y = camara.y + 20;
         draw_text(&score_text_texture, &score_text_rect, score_text, color_red, font_40);
-        
+
         // Draw the time bar
         SDL_SetRenderDrawColor(renderer, 0xFF, 0x00, 0x00, 0xFF);
         SDL_Rect time_bar_rectangle = time_bar;
         time_bar_rectangle.w = timeBarStartWidth;
         SDL_RenderDrawRect(renderer, &time_bar_rectangle);
         SDL_RenderFillRect(renderer, &time_bar);
-        
-        
+
+
         if (state.paused)
         {
             message_text_rect.x = camara.x + (camara.w / 2 - message_text_rect.w / 2);
             message_text_rect.y = camara.y + (camara.h / 2 - message_text_rect.h / 2);
-            
+
             draw_text(&message_text_texture, &message_text_rect, message_text, color_red, font_50);
         }
 
         // Dibuja barras negras a los lados cuando se cambia el aspect ratio
         if (screen_width > DEFAULT_SCREEN_WIDTH)
         {
-            SDL_Rect rect_derecho = {0, 0, camara.x, screen_height};
+            SDL_Rect rect_derecho = { 0, 0, camara.x, screen_height };
             SDL_Rect rect_izquierdo = { camara.x + camara.w, 0, camara.x, screen_height };
 
             SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
             SDL_RenderFillRect(renderer, &rect_derecho);
             SDL_RenderFillRect(renderer, &rect_izquierdo);
         }
-        
-        // Show everything we just drew
-        SDL_RenderPresent(renderer);
-    }
-    
-    
-    shutdown_game();
-    
-    return 0;
-}
 
+        //printf("Renderizando\n");
+
+        SDL_RenderPresent(renderer);
+
+#ifndef __EMSCRIPTEN__
+    }
+#endif
+}
 
 bool init()
 {
@@ -721,7 +752,7 @@ bool init()
     
     //SDL_Init(SDL_INIT_EVERYTHING);
 
-    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0)
+    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
     {
         printf("No se pudo inicializar SDL - Error: %s\n", SDL_GetError());
 
@@ -732,6 +763,9 @@ bool init()
 #ifdef RPI1
     window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+#elif __EMSCRIPTEN__
+    window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, 0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 #else
     window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -741,6 +775,7 @@ bool init()
     {
         show_error_window("Error al inicializar SDL", 
                           "No se pudo inicializar la ventana o el renderer.");
+
     }
 
     // Tamano minimo de la venta
@@ -803,8 +838,8 @@ bool init()
     
     state.right_arrow = false;
     state.left_arrow = false;
-    
-    
+   
+
     success = load_media();
     
 #ifdef RPI1
@@ -1211,7 +1246,9 @@ void show_error_window(const char* titulo, const char* msg)
     if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, titulo, msg, NULL))
     {
         fprintf(stderr, "Error al mostrar la ventana de error...\n");
+
         fprintf(stderr, "%s\n", SDL_GetError());
+
         fprintf(stderr, "Error: %s\n", msg);
     }
     
