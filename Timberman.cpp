@@ -24,6 +24,10 @@
 #define GRAPHICS_PATH   "assets/graphics/"
 #define FONTS_PATH      "assets/fonts/"
 #define SOUNDS_PATH     "assets/sounds/"
+#elif __ANDROID__
+#define GRAPHICS_PATH   "graphics/"
+#define FONTS_PATH      "fonts/"
+#define SOUNDS_PATH     "sounds/"
 #else
 #define GRAPHICS_PATH   "../../assets/graphics/"
 #define FONTS_PATH      "../../assets/fonts/"
@@ -214,6 +218,9 @@ bool beeActive = false;
 // Almacena la velocidad, en pixeles por segundo.
 float beeSpeed = 0.0f;
 
+SDL_Point touchLocation = { 0, 0 };
+bool fingerup = false;
+
 
 int main(int argc, char* argv[])
 {
@@ -262,6 +269,12 @@ void do_main_loop()
             } break;
 
             case SDL_FINGERDOWN:
+            {
+                if (state.paused)
+                {
+                    state.return_pressed = true;
+                }
+            }
             case SDL_KEYDOWN:
             {
                 if (evento.key.keysym.sym == SDLK_RETURN)
@@ -282,10 +295,27 @@ void do_main_loop()
                 }
             } break;
 
+
             case SDL_FINGERUP:
+            {
+                fingerup = true;
+
+                //SDL_Log("Toch pos: x = %f y = %f\n", evento.tfinger.x, evento.tfinger.y);
+
+                if (evento.tfinger.x < 0.5f)
+                {
+                    //SDL_Log("Izquierda\n");
+                    state.left_arrow = true;
+                }
+                else {
+                    //SDL_Log("Derecha\n");
+                    state.right_arrow = true;
+                }
+
+            }
             case SDL_KEYUP:
             {
-                if (evento.key.keysym.sym == SDLK_RETURN)
+                if (evento.key.keysym.sym == SDLK_RETURN || (fingerup && state.paused))
                 {
                     if (state.return_pressed)
                     {
@@ -317,6 +347,9 @@ void do_main_loop()
                         state.return_pressed = false;
                         state.left_arrow = false;
                         state.right_arrow = false;
+
+                        // Prueba
+                        fingerup = false;
                     }
                 }
 
@@ -329,7 +362,7 @@ void do_main_loop()
                 if (state.acceptInput)
                 {
                     // handle pressing the right cursor key
-                    if (state.right_arrow && evento.key.keysym.sym == SDLK_RIGHT)
+                    if (state.right_arrow && (evento.key.keysym.sym == SDLK_RIGHT || fingerup))
                     {
                         // NOTE: Prueba de reiniciar la animacion
                         if (player_state == ATTACKING) restart_anim = true;
@@ -359,6 +392,9 @@ void do_main_loop()
                         state.right_arrow = false;
                         state.acceptInput = false;
 
+                        // Prueba
+                        fingerup = false;
+
                         if (audio) {
                             // Play a chop sound
                             if (Mix_PlayMusic(sword_sound, 1) == -1) {
@@ -369,7 +405,7 @@ void do_main_loop()
                     }
 
                     // Handle the left cursor key
-                    if (state.left_arrow && evento.key.keysym.sym == SDLK_LEFT)
+                    if (state.left_arrow && (evento.key.keysym.sym == SDLK_LEFT || fingerup))
                     {
                         // NOTE: Prueba de reiniciar la animacion
                         if (player_state == ATTACKING) restart_anim = true;
@@ -399,6 +435,9 @@ void do_main_loop()
                         state.left_arrow = false;
                         state.acceptInput = false;
 
+                        // Prueba
+                        fingerup = false;
+
                         if (audio) {
                             //Play a chop sound
                             if (Mix_PlayMusic(sword_sound, 1) == -1) {
@@ -424,6 +463,8 @@ void do_main_loop()
                     if (window_size_changed) {
                         screen_width = evento.window.data1;
                         screen_height = evento.window.data2;
+
+                        SDL_Log("Ventana: %d x %d", screen_width, screen_height);
 
                         SDL_SetWindowSize(window, evento.window.data1, evento.window.data2);
                         //SDL_SetWindowDisplayMode();
@@ -521,7 +562,7 @@ void do_main_loop()
 
                 // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
-                nubes[0].rect.y = (rand() % 350) - 250;
+                nubes[0].rect.y = (rand() % camara.h) - 250;
                 nubes[0].rect.x = camara.x - nubes[0].rect.w;
 
                 cloud2Active = true;
@@ -547,7 +588,7 @@ void do_main_loop()
 
                 // Que tan alto aparece la nube
                 srand((int)time(0) * 20);
-                nubes[1].rect.y = (rand() % 450) - 150;
+                nubes[1].rect.y = (rand() % camara.h) - 150;
                 nubes[1].rect.x = camara.x - nubes[1].rect.w;
 
                 cloud3Active = true;
@@ -752,7 +793,9 @@ bool init()
 {
     bool success = false;
     
-    //SDL_Init(SDL_INIT_EVERYTHING);
+    // Supuestamente solo es para iOS pero tambien funcion en android
+    // TODO: Sacando esto se queda en landscape pero se ve bien, en portraint denuevo se pone en la ezquina
+    //SDL_SetHint(SDL_HINT_ORIENTATIONS, "Portrait");
 
     if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
     {
@@ -767,6 +810,18 @@ bool init()
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 #elif __EMSCRIPTEN__
     window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, 0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+#elif __ANDROID__
+    //Get device display mode
+
+    SDL_GetWindowSize(window, &screen_width, &screen_height);
+    camara.w = screen_width;
+    camara.h = screen_height;
+    resize_elements(screen_width, screen_height);
+
+    SDL_Log("Resolucion: %dx%d\n", screen_width, screen_height);
+
+    window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, screen_width, screen_height, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 #else
     window = SDL_CreateWindow("Timberman!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
@@ -1006,6 +1061,11 @@ bool load_media()
         }
     }
 #endif
+
+#ifdef _DEBUG
+    SDL_Log("Assests cargados\n");
+#endif // _DEBUG
+
     
     return success;
 }
@@ -1013,6 +1073,10 @@ bool load_media()
 // Redimensiona los elementos del juego cuando cambia la resolucion
 void resize_elements(int new_width, int new_height)
 {
+#ifdef _DEBUG
+    SDL_Log("Resolucion: %dx%d\n", new_width, new_height);
+#endif // _DEBUG
+
     // Reubica la camara
     camara.h = new_height;
     camara.x = (new_width / 2 - camara.w / 2);
@@ -1087,6 +1151,9 @@ void resize_elements(int new_width, int new_height)
         spriteRIP.rect.y = piso.rect.y - spriteRIP.rect.h;
     }
 
+#ifdef _DEBUG
+    SDL_Log("Camara: %dx%d\n", camara.w, camara.h);
+#endif
 
     window_size_changed = false;
 }
