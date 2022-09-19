@@ -261,6 +261,7 @@ void do_main_loop()
                 state.running = false;
             } break;
 
+            case SDL_FINGERDOWN:
             case SDL_KEYDOWN:
             {
                 if (evento.key.keysym.sym == SDLK_RETURN)
@@ -281,6 +282,7 @@ void do_main_loop()
                 }
             } break;
 
+            case SDL_FINGERUP:
             case SDL_KEYUP:
             {
                 if (evento.key.keysym.sym == SDLK_RETURN)
