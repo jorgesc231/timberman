@@ -5,6 +5,10 @@ Una copia mal hecha y simplificada del juego Timberman:
 	https://store.steampowered.com/app/398710/Timberman/
 
 
+Se puede probar las version web aqui:
+
+    https://jorgesc231.github.io/timberman/
+
 ## TODO
 
 - Agregar Texturas
