@@ -257,9 +257,9 @@ void do_main_loop()
         {
             //printf("Ejecutando ciclo principal!\n");
 #ifndef RPI1
-//#ifdef _DEBUG
+#ifdef _DEBUG
             PrintEvent(&evento);
-//#endif
+#endif
 #endif // !RPI1
             switch (evento.type)
             {
@@ -463,9 +463,9 @@ void do_main_loop()
                     if (window_size_changed) {
                         screen_width = evento.window.data1;
                         screen_height = evento.window.data2;
-
+#ifdef _DEBUG
                         SDL_Log("Ventana: %d x %d", screen_width, screen_height);
-
+#endif
                         SDL_SetWindowSize(window, evento.window.data1, evento.window.data2);
                         //SDL_SetWindowDisplayMode();
                         resize_elements(evento.window.data1, evento.window.data2);
