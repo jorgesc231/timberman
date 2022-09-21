@@ -14,10 +14,21 @@ Una copia mal hecha y simplificada del juego Timberman:
 
 - Portarlo a:
 1. Raspberry Pi 1 (Hecho)
-2. Web
-3. Linux
-4. Android
+2. Web (Hecho)
+3. Linux (Es casi lo mismo que Raspi 1 pero ahora no puedo probarlo)
+4. Android (Hecho)
 
 
 ## Compilar
 
+#### Raspberry Pi 1
+
+TODO
+
+#### Web
+
+TODO
+
+#### Android
+
+TODO
