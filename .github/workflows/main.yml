@@ -27,6 +27,10 @@ jobs:
       - name: Setup emsdk
         uses: mymindstorm/setup-emsdk@v11
 
+      # Gives executions permissions to the build script
+      - name: executions permissions to the build script
+        run: chmod 700 ./build_web.sh
+
       # Runs the build script
       - name: Run the build script
         run: ./build_web.sh
