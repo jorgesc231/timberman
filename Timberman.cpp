@@ -28,10 +28,14 @@
 #define GRAPHICS_PATH   "graphics/"
 #define FONTS_PATH      "fonts/"
 #define SOUNDS_PATH     "sounds/"
-#else
+#elif _DEBUG
 #define GRAPHICS_PATH   "../../assets/graphics/"
 #define FONTS_PATH      "../../assets/fonts/"
 #define SOUNDS_PATH     "../../assets/sounds/"
+#else
+#define GRAPHICS_PATH   "assets/graphics/"
+#define FONTS_PATH      "assets/fonts/"
+#define SOUNDS_PATH     "assets/sounds/"
 #endif
 
 #define FPS 60
