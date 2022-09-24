@@ -6,7 +6,7 @@ Una copia mal hecha y simplificada del juego Timberman:
 
 
 
-Pero lo funciona en Windows, Web, Raspberry Pi 1, Android y Linux (deberia).
+Pero funciona en Windows, Web, Raspberry Pi 1, Android y Linux (deberia).
 
 
 ## Jugar
