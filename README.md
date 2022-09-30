@@ -53,7 +53,7 @@ recompilar SDL2 para que los utilice.
 
 ### Linux
 
-
+**Por ahora no hay un binario para Linux, mejor seguir la instrucciones para compilarlo**
 
 
 ## Compilar
@@ -84,6 +84,38 @@ en la carpeta del emsdk.
 4. Para ejecutarlo, en el mismo simbolo del sistema:
 
     emrun web_build/timberman.html
+
+### Linux
+
+**Solo lo he probado en Ubuntu.**
+
+Clonar el repositorio:
+
+    git clone https://github.com/jorgesc231/timberman
+
+Cambiar al directorio del codigo:
+
+    cd timberman
+
+Instalar las dependencias necesarias:
+
+    sudo apt install build-essential libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+
+Crear el directorio de salida:
+
+    mkdir build
+
+Darle permisos de ejecucion al build script:
+
+    chmod 0700 ./build_linux.sh
+
+Ejecutar el build script:
+
+    ./build_linux.sh
+
+Esto deberia compilar el juego, para ejecutarlo:
+
+    build/timberman
 
 
 ### Android
