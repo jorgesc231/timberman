@@ -6,7 +6,7 @@ Una copia mal hecha y simplificada del juego Timberman:
 
 
 
-Pero funciona en Windows, Web, Raspberry Pi 1, Android y Linux (deberia).
+Pero se puede jugar en Windows, Web, Raspberry Pi 1, Android y Linux.
 
 
 ## Jugar
@@ -24,6 +24,7 @@ Descargar desde la seccion de Releases:
 
     windows_x64_timberman.zip
 
+(*[Link directo aquí](https://github.com/jorgesc231/timberman/releases/download/v0.2.0/windows_x64_timberman.zip)*)
 
 Descomprimirlo y ejecutar **Timberman.exe**.
 
@@ -34,6 +35,8 @@ Descargar desde la seccion de Releases:
 
     timberman.apk
 
+(*[Link directo aquí](https://github.com/jorgesc231/timberman/releases/download/v0.2.0/timberman.apk)*)
+
 Pasarlo al telefono de alguna forma e instalarlo. 
 
 **Tienes que tener activado: Origenes desconocidos.**
@@ -43,13 +46,11 @@ Seguramente aparezca una alerta de seguridad, ignoralas, la aplicacion no contie
 
 ### Raspberry Pi 1
 
-Es bastante dificil instalar...
-
-Para que funcione con aceleracion por hardware hay que activarlo desde el sistema operativo, instalar otros drivers de video y
-recompilar SDL2 para que los utilice.
+**No hay un binario, seguir la instrucciones de compilacion.**
 
     [Insertar video jugando en la RPI 1]
 
+*Solo lo probé en una Raspberry Pi 1 version B+.*
 
 ### Linux
 
@@ -120,12 +121,19 @@ Esto deberia compilar el juego, para ejecutarlo:
 
 ### Android
 
-TODO
-
+*Por hacer.*
 
 ### Raspberry Pi 1
 
-TODO
+**La version de SDL2 que esta en los repositorios no me funciona.**
+
+Para poder compilarlo es necesario primero compilar SDL2 desde el codigo fuente en la Raspberry Pi.
+
+En el siguiente tutorial explico como hacerlo y lo pruebo compilando timberman:
+
+<https://github.com/jorgesc231/tutoriales_raspberry/tree/master/sdl2_gles2_rpi1>
+
+*(No es necesario completar todo el tutorial)*
 
 
 
